@@ -1,0 +1,28 @@
+name: Security
+on:
+  push:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  Gosec:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch Repository
+        uses: actions/checkout@v2
+      - name: Run Gosec
+        uses: securego/gosec@master
+        with:
+          args: -exclude-dir=internal/*/ ./...
