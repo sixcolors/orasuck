@@ -134,6 +134,7 @@ func main() {
 	}
 
 	if toCsv {
+		w.Flush()
 		if err := f.Close(); err != nil {
 			log.Fatalln(err)
 		}
