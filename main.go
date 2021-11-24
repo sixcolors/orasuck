@@ -25,7 +25,7 @@ func dieOnError(msg string, err error) {
 
 func usage() {
 	fmt.Println()
-	fmt.Println("orasuck ", Version)
+	fmt.Println("orasuck", Version)
 	fmt.Println("  query data from oracle, optionally export to csv.")
 	fmt.Println()
 	fmt.Println("Usage:")
