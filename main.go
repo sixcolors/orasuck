@@ -22,16 +22,16 @@ func dieOnError(msg string, err error) {
 
 func usage() {
 	fmt.Println()
-	fmt.Println("oracle2csv")
-	fmt.Println("  query data from oracle and [optionally] export to csv.")
+	fmt.Println("orasuck")
+	fmt.Println("  query data from oracle, optionally export to csv.")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println(`  oracle2csv -server server_url [-file filename.csv] sql_query`)
+	fmt.Println(`  orasuck -server server_url [-file filename.csv] sql_query`)
 	flag.PrintDefaults()
 	fmt.Println()
 	fmt.Println("Examples:")
-	fmt.Println(`  oracle2csv -server "oracle://user:pass@server/service_name" "select * from my_table"`)
-	fmt.Println(`  oracle2csv -server "oracle://user:pass@server/service_name" -file "out.csv" "select * from my_table"`)
+	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" "select * from my_table"`)
+	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" -file "out.csv" "select * from my_table"`)
 	fmt.Println()
 }
 

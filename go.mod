@@ -1,4 +1,4 @@
-module oracle2csv
+module github.com/sixcolors/orasuck
 
 go 1.17
 
