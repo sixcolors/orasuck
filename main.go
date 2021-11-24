@@ -60,10 +60,8 @@ func main() {
 	}
 	toCsv := false
 	filename := os.ExpandEnv(file)
-	if filename == "" {
-		fmt.Println("Missing -file option")
-		usage()
-		os.Exit(1)
+	if filename != "" {
+		toCsv = true
 	}
 
 	DB, err := go_ora.NewConnection(connStr)
