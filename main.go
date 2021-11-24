@@ -13,6 +13,9 @@ import (
 	go_ora "github.com/sijms/go-ora"
 )
 
+// Version holds the value passed via the -version option
+var Version string
+
 func dieOnError(msg string, err error) {
 	if err != nil {
 		fmt.Println(msg, err)
@@ -22,7 +25,7 @@ func dieOnError(msg string, err error) {
 
 func usage() {
 	fmt.Println()
-	fmt.Println("orasuck")
+	fmt.Println("orasuck ", Version)
 	fmt.Println("  query data from oracle, optionally export to csv.")
 	fmt.Println()
 	fmt.Println("Usage:")
