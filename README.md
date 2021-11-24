@@ -180,6 +180,5 @@ Use this space to list resources you find helpful and would like to give credit 
 [stars-url]: https://github.com/sixcolors/orasuck/stargazers
 [issues-shield]: https://img.shields.io/github/issues/sixcolors/orasuck.svg?style=for-the-badge
 [issues-url]: https://github.com/sixcolors/orasuck/issues
-[license-shield]: https://img.shields.io/github/license/sixcolors/orasuck.svg?style=for-the-badge
-[license-url]: https://github.com/sixcolors/orasuck/blob/master/LICENSE.txt
+
 [product-screenshot]: images/screenshot.png
