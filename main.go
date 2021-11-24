@@ -126,7 +126,7 @@ func main() {
 				log.Fatalln(err)
 			}
 			if err := bar.Add(1); err != nil {
-				log.Println("error updating progress bar ", err.Error())
+				log.Println("error updating progress bar:", err.Error())
 			}
 		} else {
 			Record(columns, values)
