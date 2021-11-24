@@ -53,7 +53,7 @@ Of course, no one tool will serve all projects since your needs may be different
 
 ### Built With
 
-* [Golang](https://golang.org/)
+* [Go](https://golang.org/)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
