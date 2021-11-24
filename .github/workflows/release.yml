@@ -24,6 +24,12 @@ jobs:
             goos: windows 
     steps:
     - uses: actions/checkout@v2
+
+    - name: Set APP_VERSION env
+      run: echo APP_VERSION=$(basename ${GITHUB_REF}) >> ${GITHUB_ENV}
+    - name: Environment Printer
+      uses: managedkaos/print-env@v1.0
+
     - uses: wangyoucao577/go-release-action@v1.22
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -32,4 +38,4 @@ jobs:
         goversion: "https://dl.google.com/go/go1.17.3.linux-amd64.tar.gz"
         binary_name: "orasuck"
         extra_files: LICENSE.txt README.md
-        ldflags: -X "main.Version=`git tag --sort=-version:refname | head -n 1`"
+        ldflags: -X "main.Version=${{ env.APP_VERSION }}"
