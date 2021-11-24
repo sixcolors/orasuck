@@ -72,18 +72,17 @@ You will need to install Go.
 
 ### Installation
 
-_Below is an example of how you can instruct your audience on installing and setting up your app. This template doesn't rely on any external dependencies or services._
+To get this up and running:
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
    git clone https://github.com/sixcolors/orasuck.git
    ```
-3. Install Go mods
+2. Install Go mods
    ```sh
    go mod tidy
    ```
-4. Build orasuck
+3. Build orasuck
    ```sh
    go build -o orasuck main.go
    ```
