@@ -91,17 +91,16 @@ func main() {
 		if err != nil {
 			log.Fatalf("failed to open file %s %v\n", filename, err)
 		}
-		defer f.Close()
 		w = csv.NewWriter(f)
-		defer w.Flush()
 	}
 
 	var bar *progressbar.ProgressBar
 
 	if toCsv {
 		bar = progressbar.Default(-1, fmt.Sprintf("Exporting to %s...", filename))
-		w.Write(columns)
-		w.Flush()
+		if err := w.Write(columns); err != nil {
+			log.Fatalln(err)
+		}
 	} else {
 		Header(columns)
 	}
@@ -123,14 +122,21 @@ func main() {
 			if err := w.Write(aRow); err != nil {
 				log.Fatalln(err)
 			}
-			w.Flush()
-			bar.Add(1)
+			if err := bar.Add(1); err != nil {
+				log.Println("error updating progress bar ", err.Error())
+			}
 		} else {
 			Record(columns, values)
 		}
 	}
 	if err != io.EOF {
 		dieOnError("Can't Next", err)
+	}
+
+	if toCsv {
+		if err := f.Close(); err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
