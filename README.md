@@ -163,7 +163,7 @@ Project Link: [https://github.com/sixcolors/orasuck](https://github.com/sixcolor
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
 
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+I've used the following projects as dependencies.
 
 * [sijms/go-ora](github.com/sijms/go-ora)
 * [schollz/progressbar](github.com/schollz/progressbar/v3)
