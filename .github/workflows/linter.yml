@@ -1,0 +1,27 @@
+name: Linter
+on:
+  push:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+      
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v2
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: latest
+          args: --timeout 5m
