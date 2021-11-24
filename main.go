@@ -111,22 +111,22 @@ func main() {
 		if err != nil {
 			break
 		}
-		if !toCsv {
-			Record(columns, values)
-		} else {
+		if toCsv {
 			aRow := []string{}
 			for _, c := range values {
 				colValue := fmt.Sprintf("%v", c)
 				if colValue == "<nil>" {
 					colValue = ""
-					aRow = append(aRow, colValue)
 				}
+				aRow = append(aRow, colValue)
 			}
 			if err := w.Write(aRow); err != nil {
 				log.Fatalln(err)
 			}
 			w.Flush()
 			bar.Add(1)
+		} else {
+			Record(columns, values)
 		}
 	}
 	if err != io.EOF {
