@@ -36,7 +36,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-I needed a simple executable to explore and export data from an Oracle DB on a locked down corporate laptop/network.
+I needed a simple executable to explore and export data from an Oracle DB on a locked down corporate laptop/network. This was my starting point for an automated data retrieval program which I can't share publicly. This repo is public in hopes that someone else will find it useful.
 
 Here's why:
 * Oracle CLI produces broken CSV files
