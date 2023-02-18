@@ -90,7 +90,7 @@ func main() {
 	var w *csv.Writer
 	if toCsv {
 		var err error
-		f, err = os.Create(filename)
+		f, err = os.Create(filename) //#nosec G304 (CWE-22) this is intentional
 		if err != nil {
 			log.Fatalf("failed to open file %s %v\n", filename, err)
 		}
