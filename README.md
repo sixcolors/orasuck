@@ -138,7 +138,54 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
+## Testing with Docker Oracle DB
 
+Run the Oracle DB container.
+
+```sh
+docker run --name oracle -p 1521:1521 -e ORACLE_PWD=Test123 container-registry.oracle.com/database/free:latest
+```
+
+Connect to the Oracle DB container.
+
+```sh
+docker exec -it oracle bash
+```
+
+Connect to the Oracle DB.
+
+```sh
+sqlplus sys@localhost:1521/FREE as sysdba
+```
+
+Create a user and grant privileges.
+
+```sql
+alter session set "_ORACLE_SCRIPT"=true;
+CREATE USER test IDENTIFIED BY Test123;
+GRANT CONNECT, RESOURCE TO test;
+ALTER USER test QUOTA UNLIMITED ON USERS;
+```
+
+Create a table and insert some data.
+
+```sql
+CREATE TABLE test.test_table (id NUMBER, name VARCHAR2(50));
+INSERT INTO test.test_table VALUES (1, 'John Doe');
+INSERT INTO test.test_table VALUES (2, 'Jane Doe');
+```
+
+Grant select privileges.
+
+```sql
+GRANT SELECT ON test.test_table TO test;
+```
+
+Test the connection.
+
+```sh
+go run main.go -server "oracle://C##test:Test123@localhost:1521/FREE" "select * from test_table"
+```
 
 <!-- LICENSE -->
 ## License

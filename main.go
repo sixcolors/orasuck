@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/schollz/progressbar/v3"
-	go_ora "github.com/sijms/go-ora"
+	go_ora "github.com/sijms/go-ora/v2"
 )
 
 // Version holds the value passed via the -version option
