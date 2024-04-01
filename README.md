@@ -140,6 +140,8 @@ Don't forget to give the project a star! Thanks again!
 
 ## Testing with Docker Oracle DB
 
+We can test Orasuch using Oracle Database Free Edition. For more information, see [Oracle Database Free Release Quickstart](https://www.oracle.com/database/free/get-started/#quick-start).
+
 Run the Oracle DB container.
 
 ```sh
