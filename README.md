@@ -24,7 +24,11 @@
     </li>
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
+    <li><a href="#contributing">Contributing</a>
+      <ul>
+        <li><a href="#testing">Testing</a></li>
+      </ul>
+    </li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgments">Acknowledgments</a></li>
@@ -138,9 +142,9 @@ Don't forget to give the project a star! Thanks again!
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
-## Testing with Docker Oracle DB
+### Testing
 
-We can test Orasuch using Oracle Database Free Edition. For more information, see [Oracle Database Free Release Quickstart](https://www.oracle.com/database/free/get-started/#quick-start).
+We can test Orasuck using Oracle Database Free Edition. For more information, see [Oracle Database Free Release Quickstart](https://www.oracle.com/database/free/get-started/#quick-start).
 
 Run the Oracle DB container.
 
@@ -188,6 +192,9 @@ Test the connection.
 ```sh
 go run main.go -server "oracle://C##test:Test123@localhost:1521/FREE" "select * from test_table"
 ```
+
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 <!-- LICENSE -->
 ## License
