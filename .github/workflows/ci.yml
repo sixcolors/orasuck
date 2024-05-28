@@ -53,4 +53,4 @@ jobs:
         "
 
     - name: Test the connection
-      run: go run main.go -server "oracle://C##test:Test123@localhost:1521/FREE" "select * from test_table"
+      run: go run main.go -server "oracle://test:Test123@localhost:1521/FREE" "select * from test_table"

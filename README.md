@@ -190,7 +190,7 @@ GRANT SELECT ON test.test_table TO test;
 Test the connection.
 
 ```sh
-go run main.go -server "oracle://C##test:Test123@localhost:1521/FREE" "select * from test_table"
+go run main.go -server "oracle://test:Test123@localhost:1521/FREE" "select * from test_table"
 ```
 
 
