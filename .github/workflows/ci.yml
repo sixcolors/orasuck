@@ -11,7 +11,7 @@ jobs:
         image: container-registry.oracle.com/database/free:latest
         env:
           ORACLE_PWD: Test123
-        options: --name oracle
+        options: --name oracle -p 1521:1521
         ports:
           - 1521:1521
 
@@ -26,7 +26,7 @@ jobs:
 
     - name: Connect to Oracle DB and set up
       run: |
-        docker exec -it oracle bash -c "
+        docker exec oracle bash -c "
         sqlplus sys@localhost:1521/FREE as sysdba <<EOF
         alter session set "_ORACLE_SCRIPT"=true;
         CREATE USER test IDENTIFIED BY Test123;
