@@ -67,7 +67,7 @@ func main() {
 		toCsv = true
 	}
 
-	DB, err := go_ora.NewConnection(connStr)
+	DB, err := go_ora.NewConnection(connStr, nil)
 	dieOnError("Can't open the driver:", err)
 	err = DB.Open()
 	dieOnError("Can't open the connection:", err)
