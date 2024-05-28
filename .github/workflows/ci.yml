@@ -1,6 +1,18 @@
 name: Test Oracle DB
 
-on: [push, pull_request]
+on:
+  push:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
 
 jobs:
   test:
