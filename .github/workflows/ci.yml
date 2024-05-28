@@ -1,0 +1,56 @@
+name: Test Oracle DB
+
+on:
+  push:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+  pull_request:
+    paths:
+      - '**.go'
+      - '**.mod'
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      oracle:
+        image: container-registry.oracle.com/database/free:latest
+        env:
+          ORACLE_PWD: Test123
+        options: --name oracle
+        ports:
+          - 1521:1521
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.21
+
+    - name: Connect to Oracle DB and set up
+      run: |
+        docker exec oracle bash -c "
+        sqlplus sys/Test123@localhost:1521/FREE as sysdba <<EOF
+        alter session set \"_ORACLE_SCRIPT\"=true;
+        CREATE USER test IDENTIFIED BY Test123;
+        GRANT CONNECT, RESOURCE TO test;
+        ALTER USER test QUOTA UNLIMITED ON USERS;
+        CREATE TABLE test.test_table (id NUMBER, name VARCHAR2(50));
+        INSERT INTO test.test_table VALUES (1, 'John Doe');
+        INSERT INTO test.test_table VALUES (2, 'Jane Doe');
+        GRANT SELECT ON test.test_table TO test;
+        exit;
+        EOF
+        "
+
+    - name: Test the connection
+      run: go run main.go -server "oracle://test:Test123@localhost:1521/FREE" "select * from test_table"
