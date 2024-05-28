@@ -41,13 +41,13 @@ jobs:
         docker exec oracle bash -c "
         sqlplus sys/Test123@localhost:1521/FREE as sysdba <<EOF
         alter session set \"_ORACLE_SCRIPT\"=true;
-        CREATE USER c##test IDENTIFIED BY Test123;
-        GRANT CONNECT, RESOURCE TO c##test;
-        ALTER USER c##test QUOTA UNLIMITED ON USERS;
-        CREATE TABLE c##test.test_table (id NUMBER, name VARCHAR2(50));
-        INSERT INTO c##test.test_table VALUES (1, 'John Doe');
-        INSERT INTO c##test.test_table VALUES (2, 'Jane Doe');
-        GRANT SELECT ON c##test.test_table TO c##test;
+        CREATE USER test IDENTIFIED BY Test123;
+        GRANT CONNECT, RESOURCE TO test;
+        ALTER USER test QUOTA UNLIMITED ON USERS;
+        CREATE TABLE test.test_table (id NUMBER, name VARCHAR2(50));
+        INSERT INTO test.test_table VALUES (1, 'John Doe');
+        INSERT INTO test.test_table VALUES (2, 'Jane Doe');
+        GRANT SELECT ON test.test_table TO test;
         exit;
         EOF
         "
