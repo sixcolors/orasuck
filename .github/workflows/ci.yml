@@ -11,7 +11,7 @@ jobs:
         image: container-registry.oracle.com/database/free:latest
         env:
           ORACLE_PWD: Test123
-        options: --name oracle -p 1521:1521
+        options: --name oracle
         ports:
           - 1521:1521
 
@@ -22,7 +22,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v2
       with:
-        go-version: 1.16
+        go-version: 1.21
 
     - name: Connect to Oracle DB and set up
       run: |
