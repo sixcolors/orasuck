@@ -27,7 +27,7 @@ jobs:
     - name: Connect to Oracle DB and set up
       run: |
         docker exec oracle bash -c "
-        sqlplus sys@localhost:1521/FREE as sysdba <<EOF
+        sqlplus sys/Test123@localhost:1521/FREE as sysdba <<EOF
         alter session set "_ORACLE_SCRIPT"=true;
         CREATE USER test IDENTIFIED BY Test123;
         GRANT CONNECT, RESOURCE TO test;
