@@ -3,7 +3,7 @@ module github.com/sixcolors/orasuck
 go 1.19
 
 require (
-	github.com/schollz/progressbar/v3 v3.14.3
+	github.com/schollz/progressbar/v3 v3.14.4
 	github.com/sijms/go-ora/v2 v2.8.19
 )
 
