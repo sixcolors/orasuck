@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/schollz/progressbar/v3 v3.14.6
-	github.com/sijms/go-ora/v2 v2.8.19
+	github.com/sijms/go-ora/v2 v2.8.21
 )
 
 require (
