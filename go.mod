@@ -1,9 +1,9 @@
 module github.com/sixcolors/orasuck
 
-go 1.19
+go 1.23
 
 require (
-	github.com/schollz/progressbar/v3 v3.15.0
+	github.com/schollz/progressbar/v3 v3.16.1
 	github.com/sijms/go-ora/v2 v2.8.22
 )
 
