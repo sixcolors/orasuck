@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/schollz/progressbar/v3"
 	go_ora "github.com/sijms/go-ora/v2"
@@ -157,7 +158,14 @@ func main() {
 }
 
 func Header(columns []string) {
-
+	for _, col := range columns {
+		fmt.Printf("%-25s", col)
+	}
+	fmt.Println()
+	for range columns {
+		fmt.Printf("%-25s", strings.Repeat("-", 25))
+	}
+	fmt.Println()
 }
 
 func Record(columns []string, values []driver.Value) {
