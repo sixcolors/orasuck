@@ -3,19 +3,258 @@ package main
 import (
 	"database/sql/driver"
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"github.com/schollz/progressbar/v3"
 	go_ora "github.com/sijms/go-ora/v2"
+	"golang.org/x/term"
 )
 
 // Version holds the value passed via the -version option
 var Version string
+
+type DataSet interface {
+	Columns() []string
+	Next(values []driver.Value) error
+	Close() error
+}
+
+type ResultWriter interface {
+	Init(columns []string) error
+	Write(values []driver.Value) error
+	Finish() error
+}
+
+type ConsoleWriter struct {
+	columns []string
+	rows    [][]string
+	out     io.Writer
+}
+
+func (cw *ConsoleWriter) Init(columns []string) error {
+	cw.columns = columns
+	cw.rows = make([][]string, 0)
+	return nil
+}
+
+func (cw *ConsoleWriter) Write(values []driver.Value) error {
+	row := make([]string, len(values))
+	for i, v := range values {
+		if v == nil {
+			row[i] = "<nil>"
+		} else {
+			row[i] = fmt.Sprintf("%v", v)
+		}
+	}
+	cw.rows = append(cw.rows, row)
+	return nil
+}
+
+func (cw *ConsoleWriter) Finish() error {
+	out := cw.out
+	if out == nil {
+		out = os.Stdout
+	}
+	table := tablewriter.NewWriter(out)
+
+	// Set Header
+	header := make([]interface{}, len(cw.columns))
+	for i, v := range cw.columns {
+		header[i] = v
+	}
+	table.Header(header...)
+
+	// Calculate widths
+	numCols := len(cw.columns)
+	if numCols == 0 {
+		return nil
+	}
+
+	maxContentWidths := make([]int, numCols)
+
+	// Check headers first
+	for i, h := range cw.columns {
+		if len(h) > maxContentWidths[i] {
+			maxContentWidths[i] = len(h)
+		}
+	}
+
+	// Check rows
+	for _, row := range cw.rows {
+		for i, cell := range row {
+			if len(cell) > maxContentWidths[i] {
+				maxContentWidths[i] = len(cell)
+			}
+		}
+	}
+
+	// Add padding to maxContentWidths (1 left + 1 right)
+	for i := range maxContentWidths {
+		maxContentWidths[i] += 2
+	}
+
+	// Get terminal width
+	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
+	if err != nil {
+		termWidth = 80
+	}
+
+	// Calculate available space
+	// Overhead is just the borders: | col | col |
+	// 1 char per column separator + 1 char for starting border
+	overhead := numCols + 1
+	availableSpace := termWidth - overhead
+
+	if availableSpace < numCols {
+		availableSpace = numCols
+	}
+
+	// Distribute space
+	allocatedWidths := make([]int, numCols)
+
+	totalRequested := 0
+	for _, w := range maxContentWidths {
+		totalRequested += w
+	}
+
+	if totalRequested <= availableSpace {
+		copy(allocatedWidths, maxContentWidths)
+	} else {
+		remainingSpace := availableSpace
+		remainingCols := numCols
+
+		requests := make([]int, numCols)
+		copy(requests, maxContentWidths)
+		satisfied := make([]bool, numCols)
+
+		for remainingCols > 0 {
+			fairShare := remainingSpace / remainingCols
+
+			progress := false
+			for i := 0; i < numCols; i++ {
+				if !satisfied[i] && requests[i] <= fairShare {
+					allocatedWidths[i] = requests[i]
+					remainingSpace -= requests[i]
+					satisfied[i] = true
+					remainingCols--
+					progress = true
+				}
+			}
+
+			if !progress {
+				for i := 0; i < numCols; i++ {
+					if !satisfied[i] {
+						allocatedWidths[i] = fairShare
+						satisfied[i] = true
+					}
+				}
+				break
+			}
+		}
+	}
+
+	// Configure table
+	table.Configure(func(cfg *tablewriter.Config) {
+		cfg.MaxWidth = termWidth
+		cfg.Row.Formatting.AutoWrap = tw.WrapNormal
+		cfg.Row.Padding.Global.Left = " "
+		cfg.Row.Padding.Global.Right = " "
+
+		cfg.Widths.PerColumn = make(map[int]int)
+		for i, w := range allocatedWidths {
+			cfg.Widths.PerColumn[i] = w
+		}
+	})
+
+	// Add rows
+	for _, row := range cw.rows {
+		rowIf := make([]interface{}, len(row))
+		for i, v := range row {
+			rowIf[i] = v
+		}
+		if err := table.Append(rowIf...); err != nil {
+			return err
+		}
+	}
+
+	if err := table.Render(); err != nil {
+		return err
+	}
+	return nil
+}
+
+type CSVWriter struct {
+	w *csv.Writer
+}
+
+func (cw *CSVWriter) Init(columns []string) error {
+	return cw.w.Write(columns)
+}
+
+func (cw *CSVWriter) Write(values []driver.Value) error {
+	aRow := make([]string, len(values))
+	for i, c := range values {
+		colValue := fmt.Sprintf("%v", c)
+		if colValue == "<nil>" {
+			colValue = ""
+		}
+		aRow[i] = colValue
+	}
+	return cw.w.Write(aRow)
+}
+
+func (cw *CSVWriter) Finish() error {
+	cw.w.Flush()
+	return cw.w.Error()
+}
+
+type JSONWriter struct {
+	w       io.Writer
+	columns []string
+	first   bool
+}
+
+func (jw *JSONWriter) Init(columns []string) error {
+	jw.columns = columns
+	jw.first = true
+	_, err := jw.w.Write([]byte("["))
+	return err
+}
+
+func (jw *JSONWriter) Write(values []driver.Value) error {
+	if !jw.first {
+		if _, err := jw.w.Write([]byte(",")); err != nil {
+			return err
+		}
+	}
+	jw.first = false
+
+	rowMap := make(map[string]interface{})
+	for i, col := range jw.columns {
+		rowMap[col] = values[i]
+	}
+
+	b, err := json.Marshal(rowMap)
+	if err != nil {
+		return err
+	}
+	_, err = jw.w.Write(b)
+	return err
+}
+
+func (jw *JSONWriter) Finish() error {
+	_, err := jw.w.Write([]byte("]"))
+	return err
+}
 
 func dieOnError(msg string, err error) {
 	if err != nil {
@@ -27,27 +266,41 @@ func dieOnError(msg string, err error) {
 func usage() {
 	fmt.Println()
 	fmt.Println("orasuck", Version)
-	fmt.Println("  query data from oracle, optionally export to csv.")
+	fmt.Println("  query data from oracle, optionally export to csv or json.")
 	fmt.Println()
 	fmt.Println("Usage:")
-	fmt.Println(`  orasuck -server server_url [-file filename.csv] sql_query`)
+	fmt.Println(`  orasuck -server server_url [-file filename] [-json] sql_query`)
 	flag.PrintDefaults()
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" "select * from my_table"`)
 	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" -file "out.csv" "select * from my_table"`)
+	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" -file "out.json" "select * from my_table"`)
+	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" -json "select * from my_table"`)
+	fmt.Println(`  orasuck -server "oracle://user:pass@server/service_name" -csv "select * from my_table"`)
 	fmt.Println()
 }
 
 func main() {
 	var (
-		server string
-		file   string
-		query  string
+		server  string
+		file    string
+		jsonFmt bool
+		csvFmt  bool
+		version bool
+		query   string
 	)
 	flag.StringVar(&server, "server", "", "Server's URL, oracle://user:pass@server/service_name")
-	flag.StringVar(&file, "file", "", "Target file, out.csv")
+	flag.StringVar(&file, "file", "", "Target file, out.csv (defaults to json if extension is .json)")
+	flag.BoolVar(&jsonFmt, "json", false, "Output in JSON format (default if file ends in .json)")
+	flag.BoolVar(&csvFmt, "csv", false, "Output in CSV format")
+	flag.BoolVar(&version, "version", false, "Display version information")
 	flag.Parse()
+
+	if version {
+		fmt.Printf("orasuck %s\n", Version)
+		os.Exit(0)
+	}
 
 	if len(flag.Args()) < 1 {
 		fmt.Println("Missing query")
@@ -62,10 +315,13 @@ func main() {
 		usage()
 		os.Exit(1)
 	}
-	toCsv := false
 	filename := os.ExpandEnv(file)
-	if filename != "" {
-		toCsv = true
+
+	// Auto-detect JSON format from file extension
+	if filename != "" && !jsonFmt {
+		if strings.ToLower(filepath.Ext(filename)) == ".json" {
+			jsonFmt = true
+		}
 	}
 
 	DB, err := go_ora.NewConnection(connStr, nil)
@@ -95,82 +351,69 @@ func main() {
 		}
 	}()
 
-	columns := rows.Columns()
-
-	values := make([]driver.Value, len(columns))
-
+	var rw ResultWriter
 	var f *os.File
-	var w *csv.Writer
-	if toCsv {
+	var bar *progressbar.ProgressBar
+
+	if filename != "" {
 		var err error
 		f, err = os.Create(filename) //#nosec G304 (CWE-22) this is intentional
 		if err != nil {
 			log.Fatalf("failed to open file %s %v\n", filename, err)
 		}
-		w = csv.NewWriter(f)
-	}
 
-	var bar *progressbar.ProgressBar
-
-	if toCsv {
-		bar = progressbar.Default(-1, fmt.Sprintf("Exporting to %s...", filename))
-		if err := w.Write(columns); err != nil {
-			log.Fatalln(err)
-		}
-	} else {
-		Header(columns)
-	}
-
-	for {
-		err = rows.Next(values)
-		if err != nil {
-			break
-		}
-		if toCsv {
-			aRow := []string{}
-			for _, c := range values {
-				colValue := fmt.Sprintf("%v", c)
-				if colValue == "<nil>" {
-					colValue = ""
-				}
-				aRow = append(aRow, colValue)
-			}
-			if err := w.Write(aRow); err != nil {
-				log.Fatalln(err)
-			}
-			if err := bar.Add(1); err != nil {
-				log.Println("error updating progress bar:", err.Error())
-			}
+		if jsonFmt {
+			rw = &JSONWriter{w: f}
 		} else {
-			Record(columns, values)
+			rw = &CSVWriter{w: csv.NewWriter(f)}
+		}
+		bar = progressbar.Default(-1, fmt.Sprintf("Exporting to %s...", filename))
+	} else {
+		if jsonFmt {
+			rw = &JSONWriter{w: os.Stdout}
+		} else if csvFmt {
+			rw = &CSVWriter{w: csv.NewWriter(os.Stdout)}
+		} else {
+			rw = &ConsoleWriter{}
 		}
 	}
-	if err != io.EOF {
-		dieOnError("Can't Next", err)
-	}
 
-	if toCsv {
-		w.Flush()
+	err = processResults(rows, rw, bar)
+	dieOnError("Can't process results", err)
+
+	if f != nil {
 		if err := f.Close(); err != nil {
 			log.Fatalln(err)
 		}
 	}
 }
 
-func Header(columns []string) {
-	for _, col := range columns {
-		fmt.Printf("%-25s", col)
-	}
-	fmt.Println()
-	for range columns {
-		fmt.Printf("%-25s", strings.Repeat("-", 25))
-	}
-	fmt.Println()
-}
+func processResults(rows DataSet, rw ResultWriter, bar *progressbar.ProgressBar) error {
+	columns := rows.Columns()
+	values := make([]driver.Value, len(columns))
 
-func Record(columns []string, values []driver.Value) {
-	for i, c := range values {
-		fmt.Printf("%-25s: %v\n", columns[i], c)
+	if err := rw.Init(columns); err != nil {
+		return err
 	}
-	fmt.Println()
+
+	for {
+		err := rows.Next(values)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return err
+		}
+
+		if err := rw.Write(values); err != nil {
+			return err
+		}
+
+		if bar != nil {
+			if err := bar.Add(1); err != nil {
+				log.Println("error updating progress bar:", err.Error())
+			}
+		}
+	}
+	return rw.Finish()
 }
