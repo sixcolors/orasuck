@@ -72,15 +72,27 @@ func main() {
 	err = DB.Open()
 	dieOnError("Can't open the connection:", err)
 
-	defer DB.Close()
+	defer func() {
+		if err := DB.Close(); err != nil {
+			log.Println("error closing DB:", err)
+		}
+	}()
 
 	stmt := go_ora.NewStmt(query, DB)
 
-	defer stmt.Close()
+	defer func() {
+		if err := stmt.Close(); err != nil {
+			log.Println("error closing stmt:", err)
+		}
+	}()
 
 	rows, err := stmt.Query(nil)
 	dieOnError("Can't query", err)
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Println("error closing rows:", err)
+		}
+	}()
 
 	columns := rows.Columns()
 
