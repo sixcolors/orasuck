@@ -22,18 +22,24 @@ import (
 // Version holds the value passed via the -version option
 var Version string
 
+// DataSet represents a database result set with methods to iterate over rows.
+// It abstracts the underlying database driver's result set interface.
 type DataSet interface {
 	Columns() []string
 	Next(values []driver.Value) error
 	Close() error
 }
 
+// ResultWriter is the interface for writing query results in different formats.
+// Implementations include ConsoleWriter, CSVWriter, and JSONWriter.
 type ResultWriter interface {
 	Init(columns []string) error
 	Write(values []driver.Value) error
 	Finish() error
 }
 
+// ConsoleWriter writes query results as a formatted table to the console.
+// It collects all rows in memory before rendering to calculate optimal column widths.
 type ConsoleWriter struct {
 	columns []string
 	rows    [][]string
@@ -91,7 +97,8 @@ func (cw *ConsoleWriter) Finish() error {
 	// Check rows
 	for _, row := range cw.rows {
 		for i, cell := range row {
-			if len(cell) > maxContentWidths[i] {
+			// Bounds check to prevent panic if row has more cells than columns
+			if i < numCols && len(cell) > maxContentWidths[i] {
 				maxContentWidths[i] = len(cell)
 			}
 		}
@@ -192,6 +199,8 @@ func (cw *ConsoleWriter) Finish() error {
 	return nil
 }
 
+// CSVWriter writes query results in CSV format.
+// Null values are written as empty strings.
 type CSVWriter struct {
 	w *csv.Writer
 }
@@ -203,11 +212,11 @@ func (cw *CSVWriter) Init(columns []string) error {
 func (cw *CSVWriter) Write(values []driver.Value) error {
 	aRow := make([]string, len(values))
 	for i, c := range values {
-		colValue := fmt.Sprintf("%v", c)
-		if colValue == "<nil>" {
-			colValue = ""
+		if c == nil {
+			aRow[i] = ""
+		} else {
+			aRow[i] = fmt.Sprintf("%v", c)
 		}
-		aRow[i] = colValue
 	}
 	return cw.w.Write(aRow)
 }
@@ -217,6 +226,8 @@ func (cw *CSVWriter) Finish() error {
 	return cw.w.Error()
 }
 
+// JSONWriter writes query results as a JSON array of objects.
+// Each row is written as a JSON object with column names as keys.
 type JSONWriter struct {
 	w       io.Writer
 	columns []string
@@ -231,6 +242,10 @@ func (jw *JSONWriter) Init(columns []string) error {
 }
 
 func (jw *JSONWriter) Write(values []driver.Value) error {
+	if len(values) != len(jw.columns) {
+		return fmt.Errorf("column count mismatch: expected %d, got %d", len(jw.columns), len(values))
+	}
+
 	if !jw.first {
 		if _, err := jw.w.Write([]byte(",")); err != nil {
 			return err
@@ -302,6 +317,13 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Validate conflicting flags
+	if jsonFmt && csvFmt {
+		fmt.Println("Error: cannot specify both -json and -csv flags")
+		usage()
+		os.Exit(1)
+	}
+
 	if len(flag.Args()) < 1 {
 		fmt.Println("Missing query")
 		usage()
@@ -318,9 +340,21 @@ func main() {
 	filename := os.ExpandEnv(file)
 
 	// Auto-detect JSON format from file extension
-	if filename != "" && !jsonFmt {
+	if filename != "" && !jsonFmt && !csvFmt {
 		if strings.ToLower(filepath.Ext(filename)) == ".json" {
 			jsonFmt = true
+		}
+	}
+
+	// Warn if explicit format flag does not match file extension
+	if filename != "" {
+		ext := strings.ToLower(filepath.Ext(filename))
+		if jsonFmt && ext == ".csv" {
+			fmt.Fprintf(os.Stderr, "Warning: -json flag specified but output file has .csv extension\n")
+		} else if csvFmt && ext == ".json" {
+			fmt.Fprintf(os.Stderr, "Warning: -csv flag specified but output file has .json extension\n")
+		} else if !jsonFmt && !csvFmt && ext != ".csv" && ext != ".json" && ext != "" {
+			fmt.Fprintf(os.Stderr, "Warning: output file extension '%s' is neither .csv nor .json, defaulting to CSV format\n", ext)
 		}
 	}
 
@@ -388,6 +422,19 @@ func main() {
 	}
 }
 
+// processResults iterates over the provided DataSet, writes each row using the given ResultWriter,
+// and updates the progress bar if provided. It initializes the writer, processes all rows,
+// and finalizes the writer. Returns an error if any operation fails.
+//
+// Parameters:
+//
+//	rows - the DataSet to iterate over (implements Columns and Next)
+//	rw   - the ResultWriter to output each row (implements Init, Write, and Finish)
+//	bar  - an optional progress bar to update for each row processed (can be nil)
+//
+// Returns:
+//
+//	error - non-nil if an error occurs during processing, writing, or finalization
 func processResults(rows DataSet, rw ResultWriter, bar *progressbar.ProgressBar) error {
 	columns := rows.Columns()
 	values := make([]driver.Value, len(columns))
