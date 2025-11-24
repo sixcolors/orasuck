@@ -1,10 +1,10 @@
 module github.com/sixcolors/orasuck
 
-go 1.23
+go 1.25.0
 
 require (
 	github.com/schollz/progressbar/v3 v3.18.0
-	github.com/sijms/go-ora/v2 v2.8.24
+	github.com/sijms/go-ora/v2 v2.9.0
 )
 
 require (
