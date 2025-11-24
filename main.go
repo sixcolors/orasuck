@@ -53,6 +53,9 @@ func (cw *ConsoleWriter) Init(columns []string) error {
 }
 
 func (cw *ConsoleWriter) Write(values []driver.Value) error {
+	if len(values) != len(cw.columns) {
+		return fmt.Errorf("column count mismatch: expected %d, got %d", len(cw.columns), len(values))
+	}
 	row := make([]string, len(values))
 	for i, v := range values {
 		if v == nil {
@@ -340,9 +343,16 @@ func main() {
 	filename := os.ExpandEnv(file)
 
 	// Auto-detect JSON format from file extension
-	if filename != "" && !jsonFmt && !csvFmt {
-		if strings.ToLower(filepath.Ext(filename)) == ".json" {
+	if filename != "" {
+		ext := strings.ToLower(filepath.Ext(filename))
+		if !jsonFmt && !csvFmt && ext == ".json" {
 			jsonFmt = true
+		}
+		// Warn if explicit format flag does not match file extension
+		if jsonFmt && ext == ".csv" {
+			fmt.Fprintf(os.Stderr, "Warning: -json flag specified but output file has .csv extension\n")
+		} else if csvFmt && ext == ".json" {
+			fmt.Fprintf(os.Stderr, "Warning: -csv flag specified but output file has .json extension\n")
 		}
 	}
 
