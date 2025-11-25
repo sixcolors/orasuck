@@ -417,7 +417,7 @@ func main() {
 		} else if csvFmt {
 			rw = &CSVWriter{w: csv.NewWriter(os.Stdout)}
 		} else {
-			rw = &ConsoleWriter{}
+			rw = &ConsoleWriter{out: os.Stdout}
 		}
 	}
 
