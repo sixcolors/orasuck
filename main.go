@@ -112,7 +112,7 @@ func (cw *ConsoleWriter) Finish() error {
 		maxContentWidths[i] += 2
 	}
 
-	// Get terminal width based on cw.out
+	// Get terminal width based on output writer
 	termWidth := 80
 	if f, ok := out.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
 		if w, _, err := term.GetSize(int(f.Fd())); err == nil {
