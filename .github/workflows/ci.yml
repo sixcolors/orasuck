@@ -42,6 +42,9 @@ jobs:
     - name: Build
       run: go build -ldflags "-X main.Version=${{ env.VERSION }}" -o orasuck main.go
 
+    - name: Run Unit Tests
+      run: go test -v ./...
+
     - name: Connect to Oracle DB and set up
       run: |
         docker exec oracle bash -c "
@@ -57,9 +60,6 @@ jobs:
         exit;
         EOF
         "
-
-    - name: Run Unit Tests
-      run: go test -v ./...
 
     - name: Test the connection
       run: go run main.go -server "oracle://test:Test123@localhost:1521/FREE" "select * from test_table"

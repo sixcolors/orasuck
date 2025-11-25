@@ -19,7 +19,7 @@ import (
 	"golang.org/x/term"
 )
 
-// Version holds the value passed via the -version option
+// Version holds the application version, typically set via linker flags during build
 var Version string
 
 // DataSet represents a database result set with methods to iterate over rows.
@@ -112,10 +112,12 @@ func (cw *ConsoleWriter) Finish() error {
 		maxContentWidths[i] += 2
 	}
 
-	// Get terminal width
-	termWidth, _, err := term.GetSize(int(os.Stdout.Fd()))
-	if err != nil {
-		termWidth = 80
+	// Get terminal width based on cw.out
+	termWidth := 80
+	if f, ok := out.(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		if w, _, err := term.GetSize(int(f.Fd())); err == nil {
+			termWidth = w
+		}
 	}
 
 	// Calculate available space
@@ -205,14 +207,19 @@ func (cw *ConsoleWriter) Finish() error {
 // CSVWriter writes query results in CSV format.
 // Null values are written as empty strings.
 type CSVWriter struct {
-	w *csv.Writer
+	w       *csv.Writer
+	columns []string
 }
 
 func (cw *CSVWriter) Init(columns []string) error {
+	cw.columns = columns
 	return cw.w.Write(columns)
 }
 
 func (cw *CSVWriter) Write(values []driver.Value) error {
+	if len(values) != len(cw.columns) {
+		return fmt.Errorf("column count mismatch: expected %d, got %d", len(cw.columns), len(values))
+	}
 	aRow := make([]string, len(values))
 	for i, c := range values {
 		if c == nil {
@@ -309,7 +316,7 @@ func main() {
 		query   string
 	)
 	flag.StringVar(&server, "server", "", "Server's URL, oracle://user:pass@server/service_name")
-	flag.StringVar(&file, "file", "", "Target file, out.csv (defaults to json if extension is .json)")
+	flag.StringVar(&file, "file", "", "Target file (defaults to JSON if extension is .json, CSV otherwise)")
 	flag.BoolVar(&jsonFmt, "json", false, "Output in JSON format (default if file ends in .json)")
 	flag.BoolVar(&csvFmt, "csv", false, "Output in CSV format")
 	flag.BoolVar(&version, "version", false, "Display version information")
@@ -353,18 +360,6 @@ func main() {
 			fmt.Fprintf(os.Stderr, "Warning: -json flag specified but output file has .csv extension\n")
 		} else if csvFmt && ext == ".json" {
 			fmt.Fprintf(os.Stderr, "Warning: -csv flag specified but output file has .json extension\n")
-		}
-	}
-
-	// Warn if explicit format flag does not match file extension
-	if filename != "" {
-		ext := strings.ToLower(filepath.Ext(filename))
-		if jsonFmt && ext == ".csv" {
-			fmt.Fprintf(os.Stderr, "Warning: -json flag specified but output file has .csv extension\n")
-		} else if csvFmt && ext == ".json" {
-			fmt.Fprintf(os.Stderr, "Warning: -csv flag specified but output file has .json extension\n")
-		} else if !jsonFmt && !csvFmt && ext != ".csv" && ext != ".json" && ext != "" {
-			fmt.Fprintf(os.Stderr, "Warning: output file extension '%s' is neither .csv nor .json, defaulting to CSV format\n", ext)
 		}
 	}
 
