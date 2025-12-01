@@ -36,6 +36,15 @@ jobs:
       with:
         go-version: 1.25
 
+    - name: Set version
+      run: echo "VERSION=$(git describe --tags --always)" >> $GITHUB_ENV
+
+    - name: Build
+      run: go build -ldflags "-X main.Version=${{ env.VERSION }}" -o orasuck main.go
+
+    - name: Run Unit Tests
+      run: go test -v ./...
+
     - name: Connect to Oracle DB and set up
       run: |
         docker exec oracle bash -c "
