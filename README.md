@@ -56,6 +56,9 @@ Of course, no one tool will serve all projects since your needs may be different
 ### Built With
 
 * [Go](https://golang.org/)
+* [go-ora](https://github.com/sijms/go-ora)
+* [tablewriter](https://github.com/olekukonko/tablewriter)
+* [progressbar](https://github.com/schollz/progressbar)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
@@ -101,7 +104,7 @@ To get this up and running:
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-* Query and display (pretty) to stdout
+* Query and display (pretty table) to stdout
 ```sh
 orasuck -server "oracle://user:pass@server/service_name" "select * from my_table"
 ```
@@ -109,6 +112,21 @@ orasuck -server "oracle://user:pass@server/service_name" "select * from my_table
 * Query and export to csv file
 ```sh
 orasuck -server "oracle://user:pass@server/service_name" -file "out.csv" "select * from my_table"
+```
+
+* Query and export to json file (auto-detected by extension)
+```sh
+orasuck -server "oracle://user:pass@server/service_name" -file "out.json" "select * from my_table"
+```
+
+* Query and output json to stdout
+```sh
+orasuck -server "oracle://user:pass@server/service_name" -json "select * from my_table"
+```
+
+* Query and output csv to stdout
+```sh
+orasuck -server "oracle://user:pass@server/service_name" -csv "select * from my_table"
 ```
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -144,7 +162,13 @@ Don't forget to give the project a star! Thanks again!
 
 ### Testing
 
-We can test Orasuck using Oracle Database Free Edition. For more information, see [Oracle Database Free Release Quickstart](https://www.oracle.com/database/free/get-started/#quick-start).
+You can run the unit tests locally without any external dependencies:
+
+```sh
+go test -v
+```
+
+For integration testing, we can test Orasuck using Oracle Database Free Edition. For more information, see [Oracle Database Free Release Quickstart](https://www.oracle.com/database/free/get-started/#quick-start).
 
 Run the Oracle DB container.
 
@@ -221,8 +245,9 @@ Project Link: [https://github.com/sixcolors/orasuck](https://github.com/sixcolor
 
 I've used the following projects as dependencies.
 
-* [sijms/go-ora](github.com/sijms/go-ora)
-* [schollz/progressbar](github.com/schollz/progressbar/v3)
+* [sijms/go-ora](https://github.com/sijms/go-ora)
+* [schollz/progressbar](https://github.com/schollz/progressbar)
+* [olekukonko/tablewriter](https://github.com/olekukonko/tablewriter)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
