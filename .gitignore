@@ -2,3 +2,6 @@ adam_exporter.exe
 orasuck.exe
 .DS_Store
 orasuck
+coverage.out
+out.csv
+.vscode/
